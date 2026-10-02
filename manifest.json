@@ -1,0 +1,27 @@
+{
+  "name": "مقاول الرياض المتخصص لأعمال الدهانات والديكورات والترميم",
+  "short_name": "مقاول الرياض",
+  "description": "مقاول معتمد في الرياض لأعمال الترميم والتشطيب وبناء الملاحق والدهانات والديكورات الحديثة.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1329",
+  "theme_color": "#0b1329",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/images/logo_result.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/preview.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
