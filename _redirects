@@ -1,0 +1,18 @@
+# Cloudflare Pages Clean Redirects
+# Strictly avoiding "/* /404.html 404" to prevent Cloudflare Pages gray screen loops
+
+# Canonical Root Redirection
+/index.html    /    301
+
+# Legacy & Alias Routing for Services
+/renovation                 /renovation-finishing.html     301
+/finishing                  /renovation-finishing.html     301
+/annex                      /annex-construction.html       301
+/painting                   /painting-execution.html       301
+/paints                     /painting-execution.html       301
+/marble                     /marble-alternative.html       301
+/chipboard                  /chipboard-alternative.html    301
+/parquet                    /parquet-installation.html     301
+/tile                       /tile-installation.html        301
+/contact                    /contact-us.html               301
+/about                      /about-us.html                 301
