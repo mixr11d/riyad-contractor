@@ -1,0 +1,28 @@
+# Robots.txt for Riyadh Contractor
+# Live Domain: https://riyad-contractor.pages.dev
+
+User-agent: *
+Allow: /
+
+# Disallow private and utility pages
+Disallow: /thank-you.html
+Disallow: /404.html
+
+# AI Crawlers & LLM Agents
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Sitemap Index Reference
+Sitemap: https://riyad-contractor.pages.dev/sitemap.xml
