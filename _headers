@@ -28,13 +28,14 @@
 /images/*
   Cache-Control: public, max-age=31536000, immutable
 
+# WhatsApp & Social Preview Image
+/preview.jpeg
+  Cache-Control: public, max-age=86400
+
 /preview.png
   Cache-Control: public, max-age=86400
 
-/logo.png
-  Cache-Control: public, max-age=86400
-
-# XML Sitemap and Robots
+# XML Sitemap, Robots, and LLM Manifests
 /sitemap.xml
   Cache-Control: public, max-age=86400
   Content-Type: application/xml; charset=utf-8
