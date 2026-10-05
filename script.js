@@ -18,7 +18,7 @@
   const DEVELOPER_PHONE = '0578539687';
   const DEVELOPER_PHONE_INT = '966578539687';
 
-  // --- 1. Cloudflare Service Worker Auto-Cleanup (Rule 4) ---
+  // --- 1. Cloudflare Service Worker Auto-Cleanup ---
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function (registrations) {
       for (let registration of registrations) {
@@ -27,7 +27,7 @@
     }).catch(function () {});
   }
 
-  // --- 2. Central Google Tag Initialization (Rule 1) ---
+  // --- 2. Central Google Tag Initialization ---
   window.dataLayer = window.dataLayer || [];
   function gtag() {
     window.dataLayer.push(arguments);
@@ -44,7 +44,7 @@
   gtagScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + GOOGLE_ADS_ID;
   document.head.appendChild(gtagScript);
 
-  // --- 3. Unified Conversion Dispatcher (AW-ID/Label format) ---
+  // --- 3. Unified Conversion Dispatcher ---
   function triggerGoogleConversion(conversionLabel, callback) {
     let called = false;
     function executeCallback() {
@@ -54,8 +54,8 @@
       }
     }
 
-    // Safety timeout in case gtag fails or is blocked by ad blocker
-    const timer = setTimeout(executeCallback, 600);
+    // مهلة أمان لضمان عدم تعليق المتصفح في حال وجود مانع إعلانات (AdBlocker)
+    const timer = setTimeout(executeCallback, 500);
 
     if (typeof window.gtag === 'function') {
       window.gtag('event', 'conversion', {
@@ -84,31 +84,33 @@
 
     const href = targetLink.getAttribute('href') || '';
 
-    // Check for Developer Exemption
+    // استثناء أرقام المطور من احتساب التحويلات
     if (href.includes(DEVELOPER_PHONE) || href.includes(DEVELOPER_PHONE_INT)) {
-      return; // Do not register ad conversions for developer support contact
+      return;
     }
 
-    // A. Phone Call Link Detection
+    // أ) روابط الاتصال (Call Tracking)
     if (href.startsWith('tel:')) {
+      e.preventDefault(); // منع السلوك الافتراضي لضمان اكتمال التتبع
       if (!isMobileDevice()) {
-        // Prevent default frozen app prompt on desktop during Tag Assistant Troubleshoot
-        e.preventDefault();
         triggerGoogleConversion(LABEL_CALL, function () {
           alert('للاتصال المباشر بمقاول الرياض: ' + CLIENT_PHONE_LOCAL);
         });
       } else {
-        // On Mobile: trigger conversion instantly
-        triggerGoogleConversion(LABEL_CALL);
+        // على الجوال: إرسال التحويل ثم فتح الاتصال مباشرة
+        triggerGoogleConversion(LABEL_CALL, function () {
+          window.location.href = href;
+        });
       }
       return;
     }
 
-    // B. WhatsApp Link Detection
+    // ب) روابط الواتساب (WhatsApp Tracking)
     if (href.includes('wa.me') || href.includes('whatsapp.com')) {
       e.preventDefault();
       triggerGoogleConversion(LABEL_WHATSAPP, function () {
-        window.open(href, '_blank', 'noopener,noreferrer');
+        // التحويل في نفس التبويب لتفادي حظر الآيفون للنوافذ المنبثقة
+        window.location.href = href;
       });
     }
   }, true);
@@ -127,11 +129,19 @@
         const serviceInput = form.querySelector('[name="service_type"]');
         const detailsInput = form.querySelector('[name="project_details"]');
 
-        const name = nameInput ? nameInput.value.trim() : 'غير محدد';
-        const phone = phoneInput ? phoneInput.value.trim() : 'غير محدد';
-        const district = districtInput ? districtInput.value.trim() : 'الرياض';
-        const service = serviceInput ? serviceInput.value.trim() : 'خدمات المقاولات والديكور';
-        const details = detailsInput ? detailsInput.value.trim() : 'طلب معاينة وتسعير';
+        const phone = phoneInput ? phoneInput.value.trim() : '';
+
+        // منع إرسال النموذج إذا كان الجوال فارغاً لتفادي حرق ميزانية الإعلانات
+        if (!phone || phone.length < 9) {
+          alert('فضلاً أدخل رقم جوال صحيح للتواصل معك');
+          if (phoneInput) phoneInput.focus();
+          return;
+        }
+
+        const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'عميل من الموقع';
+        const district = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : 'الرياض';
+        const service = (serviceInput && serviceInput.value.trim()) ? serviceInput.value.trim() : 'خدمات المقاولات والديكور';
+        const details = (detailsInput && detailsInput.value.trim()) ? detailsInput.value.trim() : 'طلب معاينة وتسعير';
 
         const whatsappMessage = encodeURIComponent(
           'السلام عليكم ورحمة الله، أود طلب معاينة وتسعير من مؤسستكم:\n' +
@@ -144,7 +154,7 @@
 
         const whatsappUrl = 'https://wa.me/' + CLIENT_PHONE_INT + '?text=' + whatsappMessage;
 
-        // Trigger Google Ads Form Conversion then Redirect to WhatsApp
+        // إرسال التحويل لجوجل أدز ثم التحويل للواتساب
         triggerGoogleConversion(LABEL_FORM, function () {
           window.location.href = whatsappUrl;
         });
@@ -199,7 +209,7 @@
       });
     }
 
-    // Close Dropdowns on outside click
+    // إغلاق الـ Dropdowns عند النقر بالخارج
     document.addEventListener('click', function (e) {
       dropdowns.forEach(function (drop) {
         if (!drop.contains(e.target)) {
@@ -217,7 +227,7 @@
         } else {
           scrollTopBtn.classList.remove('visible');
         }
-      });
+      }, { passive: true });
 
       scrollTopBtn.addEventListener('click', function () {
         window.scrollTo({
