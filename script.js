@@ -8,10 +8,10 @@
   'use strict';
 
   // --- Configuration Constants ---
-  const GOOGLE_ADS_ID = 'AW-XXXXXXXXXXX';
-  const LABEL_CALL = 'XXXXXXXXXXXXXXXXXX';
-  const LABEL_WHATSAPP = 'XXXXXXXXXXXXXXXXXX';
-  const LABEL_FORM = 'XXXXXXXXXXXXXXXXXX';
+  const GOOGLE_ADS_ID = 'AW-18495226943';
+  const LABEL_CALL = 'mQp6CM_L6pEdEL-Im_NE';
+  const LABEL_WHATSAPP = 'mlIxCNLL6pEdEL-Im_NE';
+  const LABEL_FORM = 'R1VKCLLY6pEdEL-Im_NE';
 
   const CLIENT_PHONE_LOCAL = '0552449748';
   const CLIENT_PHONE_INT = '966552449748';
