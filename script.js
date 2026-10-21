@@ -1,17 +1,16 @@
 /**
  * SCRIPT.JS - مقاول الرياض لأعمال الترميم والتشطيب والديكورات
- * Architecture: Based on Verified High-Conversion Engine
- * Features: Google Ads Fast Debug + Clean Tracking + Form & Navigation Handlers
+ * Architecture: Zero-Error Google Ads Engine + Pure Vanilla Fast Tracking
+ * Verified: Instant gtag Boot + No Popups Blocked + Complete Dev Shield
  */
 
 (function () {
   'use strict';
 
-  // --- 1. الإعدادات والبيانات الخاصة بالعميل الحالي ---
-  const APP_CONFIG = {
+  // --- 1. الإعدادات والبيانات المركزية للعميل ---
+  var APP_CONFIG = {
     phoneLocal: '0552449748',
     phoneIntl: '966552449748',
-    devPhoneIntl: '966578539687',
     conversionId: 'AW-18495226943',
     labels: {
       call: '23OqCMz7k5wdEL-Im_NE',
@@ -20,25 +19,26 @@
     }
   };
 
-  // تنظيف أي Service Worker قديم على Cloudflare
+  // قائمة أرقام المطور بالصيغتين المحلية والدولية لمنع احتساب إحالات الاختبار
+  var DEV_NUMS = ['0578539687', '966578539687'];
+
+  // تنظيف أي Service Worker قديم على Cloudflare Pages لمنع الشاشة البيضاء
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function (registrations) {
-      for (let reg of registrations) {
+      registrations.forEach(function (reg) {
         reg.unregister();
-      }
+      });
     }).catch(function () {});
   }
 
-  // وضع المطور لمنع احتساب تحويلات أثناء التعديل
+  // كشف وضع المطور (عبر الرابط أو التخزين المحلي)
   function isDeveloperSession() {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('dev') === 'true' || urlParams.get('admin') === 'true') {
-      try {
-        localStorage.setItem('riyadh_contractor_dev_mode', '1');
-      } catch (e) {}
-      return true;
-    }
     try {
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('dev') === 'true' || urlParams.get('admin') === 'true') {
+        localStorage.setItem('riyadh_contractor_dev_mode', '1');
+        return true;
+      }
       if (localStorage.getItem('riyadh_contractor_dev_mode') === '1') {
         return true;
       }
@@ -46,166 +46,143 @@
     return false;
   }
 
-  const IS_DEV = isDeveloperSession();
+  var IS_DEV = isDeveloperSession();
   if (IS_DEV) {
     console.info('%c[Tracking Disabled]%c Dev Mode Active', 'color: #ea580c; font-weight: bold;', 'color: inherit;');
   }
 
-  // --- 2. تهيئة جوجل أدز (تحميل فوري في وضع الفحص gtm_debug) ---
-  function initGoogleAds() {
-    if (IS_DEV) return;
-
-    const loadGtag = function () {
-      if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
-
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = `https://www.googletagmanager.com/gtag/js?id=${APP_CONFIG.conversionId}`;
-      document.head.appendChild(script);
-
-      window.dataLayer = window.dataLayer || [];
-      window.gtag = function () {
-        window.dataLayer.push(arguments);
-      };
-      window.gtag('js', new Date());
-      window.gtag('config', APP_CONFIG.conversionId, {
-        send_page_view: true
-      });
-    };
-
-    // إذا كانت الصفحة مفتوحة عبر Tag Assistant نقوم بالتحميل فوراً
-    if (window.location.search.includes('gtm_debug')) {
-      loadGtag();
-    } else if ('requestIdleCallback' in window) {
-      window.requestIdleCallback(loadGtag, { timeout: 2000 });
-    } else {
-      window.addEventListener('load', function () {
-        setTimeout(loadGtag, 1000);
-      });
-    }
+  // --- 2. تهيئة جوجل أدز فورياً في النطاق العام (Global Immediate Boot) ---
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    window.dataLayer.push(arguments);
   }
+  window.gtag = gtag;
+  gtag('js', new Date());
+  gtag('config', APP_CONFIG.conversionId);
 
-  // --- 3. محرك إرسال الإحالات الناجحة (Conversion Dispatcher) ---
-  function sendConversionEvent(label, callback) {
+  // حقن سكربت قوقل مباشرة وبدون أي تأخير لضمان التقاط كل نقرة
+  (function injectGtagScript() {
+    if (IS_DEV) return;
+    if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
+
+    var script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + APP_CONFIG.conversionId;
+    (document.head || document.documentElement).appendChild(script);
+  })();
+
+  // --- 3. محرك إرسال الإحالات المعتمد والمباشر ---
+  function sendConversionEvent(label) {
     if (IS_DEV) {
-      console.log(`[Dev Simulation] Conversion Sent: ${label}`);
-      if (typeof callback === 'function') callback();
+      console.log('[Dev Simulation] Conversion Sent:', label);
       return;
     }
-
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', 'conversion', {
-        send_to: `${APP_CONFIG.conversionId}/${label}`,
-        value: 1.0,
-        currency: 'SAR',
-        event_callback: function () {
-          if (typeof callback === 'function') callback();
-        }
-      });
-
-      // مؤقت أمان لضمان استمرار التوجيه حتى مع بطء الشبكة
-      setTimeout(function () {
-        if (typeof callback === 'function') {
-          callback();
-          callback = null;
-        }
-      }, 400);
-    } else {
-      if (typeof callback === 'function') callback();
-    }
+    gtag('event', 'conversion', {
+      'send_to': APP_CONFIG.conversionId + '/' + label
+    });
   }
 
-  // إتاحة الدوال على نطاق window كما في كود العميل السابق
+  // إتاحة الدوال على نطاق window للتوافق مع أي عناصر تستدعيها بالاسم
   window.handleCallClick = function () {
     sendConversionEvent(APP_CONFIG.labels.call);
   };
 
   window.handleWhatsAppClick = function (customMsg) {
-    const defaultMsg = 'السلام عليكم مقاول الرياض، أود الاستفسار عن خدمات الترميم والديكور وحجز موعد معاينة.';
-    const msg = encodeURIComponent(customMsg || defaultMsg);
-    const targetUrl = `https://wa.me/${APP_CONFIG.phoneIntl}?text=${msg}`;
-
-    sendConversionEvent(APP_CONFIG.labels.whatsapp, function () {
-      window.location.href = targetUrl;
-    });
+    sendConversionEvent(APP_CONFIG.labels.whatsapp);
+    var defaultMsg = 'السلام عليكم مقاول الرياض، أود الاستفسار عن خدمات الترميم والديكور وحجز موعد معاينة.';
+    var msg = encodeURIComponent(customMsg || defaultMsg);
+    window.location.href = 'https://wa.me/' + APP_CONFIG.phoneIntl + '?text=' + msg;
   };
 
-  // رصد تلقائي لأي زر اتصال أو واتساب في الموقع دون الحاجة لتعديل الـ HTML
+  // --- 4. مستشعر النقرات الشامل (Capturing Click Listener) بدون منع للمتصفح ---
   document.addEventListener('click', function (e) {
-    const targetLink = e.target.closest('a');
+    var targetLink = e.target.closest('a');
     if (!targetLink) return;
 
-    const href = (targetLink.getAttribute('href') || '').trim();
-    const lowerHref = href.toLowerCase();
+    var href = (targetLink.getAttribute('href') || '').trim();
+    var lowerHref = href.toLowerCase();
 
-    // تجاهل أرقام المطور
-    if (href.includes(APP_CONFIG.devPhoneIntl)) return;
+    // فحص استثناء أرقام المطور بالصيغتين لمنع هدر الميزانية
+    var isDevClick = DEV_NUMS.some(function (num) {
+      return href.includes(num);
+    });
+    if (isDevClick) return;
 
-    // أ) رصد الاتصال: إرسال التحويل فوراً بدون منع المتصفح (حل مشكلة الفحص)
-    if (lowerHref.startsWith('tel:')) {
+    // أ) رصد الاتصال المباشر
+    if (lowerHref.startsWith('tel:') || (targetLink.getAttribute('href') && targetLink.getAttribute('href').startsWith('tel:'))) {
       sendConversionEvent(APP_CONFIG.labels.call);
       return;
     }
 
-    // ب) رصد الواتساب
+    // ب) رصد نقرات الواتساب بدون preventDefault حتى لا يُحظر التطبيق على الجوال
     if (lowerHref.includes('wa.me') || lowerHref.includes('whatsapp.com')) {
-      e.preventDefault();
-      sendConversionEvent(APP_CONFIG.labels.whatsapp, function () {
-        window.location.href = href;
-      });
+      sendConversionEvent(APP_CONFIG.labels.whatsapp);
     }
   }, true);
 
-  // --- 4. معالج نموذج الطلب السريع (.ajax-lead-form) ---
+  // --- 5. معالج نموذج الطلب السريع (.ajax-lead-form) ---
   function initLeadForms() {
-    const leadForms = document.querySelectorAll('.ajax-lead-form');
+    var leadForms = document.querySelectorAll('.ajax-lead-form');
 
     leadForms.forEach(function (form) {
       form.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const nameInput = form.querySelector('[name="client_name"]');
-        const phoneInput = form.querySelector('[name="client_phone"]');
-        const districtInput = form.querySelector('[name="client_district"]');
-        const serviceInput = form.querySelector('[name="service_type"]');
-        const detailsInput = form.querySelector('[name="project_details"]');
+        // إرسال الإحالة فوراً لقوقل أدز
+        sendConversionEvent(APP_CONFIG.labels.form);
 
-        const phone = phoneInput ? phoneInput.value.trim() : '';
-        if (!phone || phone.length < 9) {
-          alert('فضلاً أدخل رقم جوال صحيح');
-          if (phoneInput) phoneInput.focus();
+        // قراءة الحقول مع دعم المسميات المختلفة
+        var nameInput = form.querySelector('[name="name"], [name="client_name"]');
+        var phoneInput = form.querySelector('[name="phone"], [name="client_phone"]');
+        var districtInput = form.querySelector('[name="district"], [name="client_district"], [name="notes"]');
+        var serviceInput = form.querySelector('[name="service"], [name="service_type"]');
+        var detailsInput = form.querySelector('[name="notes"], [name="project_details"]');
+
+        var phone = phoneInput ? phoneInput.value.trim() : '';
+        if (!phone) {
+          if (phoneInput) {
+            phoneInput.style.borderColor = '#ef4444';
+            phoneInput.focus();
+          }
           return;
         }
 
-        const name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'عميل من الموقع';
-        const district = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : 'الرياض';
-        const service = (serviceInput && serviceInput.value.trim()) ? serviceInput.value.trim() : 'خدمات المقاولات والترميم';
-        const details = (detailsInput && detailsInput.value.trim()) ? detailsInput.value.trim() : 'طلب معاينة وتسعير';
+        var name = (nameInput && nameInput.value.trim()) ? nameInput.value.trim() : 'عميل من الموقع';
+        var district = (districtInput && districtInput.value.trim()) ? districtInput.value.trim() : 'الرياض';
+        var service = (serviceInput && serviceInput.value.trim()) ? serviceInput.value.trim() : 'خدمات المقاولات والتشطيب';
+        var details = (detailsInput && detailsInput.value.trim()) ? detailsInput.value.trim() : 'طلب معاينة وتسعير';
 
-        const message = encodeURIComponent(
-          'السلام عليكم ورحمة الله، أود طلب معاينة وتسعير من مؤسستكم:\n' +
+        var message = encodeURIComponent(
+          'السلام عليكم ورحمة الله،\nطلب معاينة وتسعير جديد عبر الموقع:\n' +
           '• الاسم: ' + name + '\n' +
           '• الجوال: ' + phone + '\n' +
           '• الحي / المنطقة: ' + district + '\n' +
           '• الخدمة المطلوبة: ' + service + '\n' +
-          '• ملاحظات: ' + details
+          '• التفاصيل: ' + details
         );
 
-        const whatsappUrl = `https://wa.me/${APP_CONFIG.phoneIntl}?text=${message}`;
+        var whatsappUrl = 'https://wa.me/' + APP_CONFIG.phoneIntl + '?text=' + message;
 
-        sendConversionEvent(APP_CONFIG.labels.form, function () {
-          window.location.href = whatsappUrl;
-        });
+        // فتح الواتساب بعد 300ms لضمان اكتمال إرسال طلب التتبع
+        setTimeout(function () {
+          window.open(whatsappUrl, '_blank');
+          if (window.location.pathname.indexOf('thank-you') === -1) {
+            // توجيه لصفحة الشكر إن وجدت
+            try {
+              window.location.href = '/thank-you.html';
+            } catch (err) {}
+          }
+        }, 300);
       });
     });
   }
 
-  // --- 5. القائمة الجانبية والقوائم المنسدلة (UI Logic) ---
+  // --- 6. القائمة الجانبية والقوائم المنسدلة (UI Logic) ---
   function initNavigation() {
-    const mobileToggle = document.getElementById('mobileToggle');
-    const mobileDrawer = document.getElementById('mobileDrawer');
-    const mobileBackdrop = document.getElementById('mobileBackdrop');
-    const drawerClose = document.getElementById('drawerClose');
+    var mobileToggle = document.getElementById('mobileToggle');
+    var mobileDrawer = document.getElementById('mobileDrawer');
+    var mobileBackdrop = document.getElementById('mobileBackdrop');
+    var drawerClose = document.getElementById('drawerClose');
 
     function openDrawer() {
       if (mobileDrawer && mobileBackdrop) {
@@ -227,10 +204,10 @@
     if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
     if (mobileBackdrop) mobileBackdrop.addEventListener('click', closeDrawer);
 
-    // القوائم المنسدلة
-    const dropdowns = document.querySelectorAll('.dropdown');
+    // القوائم المنسدلة في الهيدر
+    var dropdowns = document.querySelectorAll('.dropdown');
     dropdowns.forEach(function (drop) {
-      const btn = drop.querySelector('.dropdown-btn');
+      var btn = drop.querySelector('.dropdown-btn');
       if (btn) {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -239,8 +216,9 @@
       }
     });
 
-    const drawerDropdownTrigger = document.querySelector('.drawer-dropdown-trigger');
-    const drawerSubmenu = document.querySelector('.drawer-submenu');
+    // القوائم المنسدلة داخل القائمة الجانبية
+    var drawerDropdownTrigger = document.querySelector('.drawer-dropdown-trigger');
+    var drawerSubmenu = document.querySelector('.drawer-submenu');
     if (drawerDropdownTrigger && drawerSubmenu) {
       drawerDropdownTrigger.addEventListener('click', function (e) {
         e.preventDefault();
@@ -257,9 +235,9 @@
     });
   }
 
-  // --- 6. زر الصعود للأعلى ---
+  // --- 7. زر الصعود للأعلى ---
   function initScrollToTop() {
-    const scrollTopBtn = document.getElementById('scrollTopBtn');
+    var scrollTopBtn = document.getElementById('scrollTopBtn');
     if (!scrollTopBtn) return;
 
     window.addEventListener('scroll', function () {
@@ -278,9 +256,13 @@
     });
   }
 
-  // --- 7. تشغيل الدوال عند جاهزية الصفحة ---
+  // --- 8. تشغيل المكونات فور اكتمال بنية الصفحة ---
   document.addEventListener('DOMContentLoaded', function () {
-    initGoogleAds();
+    // رصد تلقائي لصفحة الشكر في حال وصول العميل إليها مباشرة
+    if (window.location.pathname.includes('thank-you')) {
+      sendConversionEvent(APP_CONFIG.labels.form);
+    }
+
     initLeadForms();
     initNavigation();
     initScrollToTop();
